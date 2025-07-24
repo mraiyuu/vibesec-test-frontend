@@ -55,7 +55,7 @@ const CodeExchange: React.FC = () => {
         );
 
         // Log the entire backend response
-        console.log("Backend response:", response);
+        console.log("Backend response:", response.data);
 
         if (response.status >= 200 && response.status < 300) {
           setAuthState("success");
