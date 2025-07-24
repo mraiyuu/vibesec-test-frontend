@@ -45,12 +45,12 @@ const CodeExchange: React.FC = () => {
 
         console.log("Sending request to backend with code:", codeData);
         const response = await axios.post(
-          "https://backend.vibesec.app/api/v2/user/exchangeCode",
+          // "https://backend.vibesec.app/api/v2/user/exchangeCode",
+          "https://backend.vibesec.app/api/v2/admin/getAllUserPayments",
           { code: codeData },
           {
             headers: { "Content-Type": "application/json" },
             withCredentials: true,
-            signal: controller.signal,
           }
         );
 
