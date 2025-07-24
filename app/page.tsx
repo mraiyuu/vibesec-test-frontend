@@ -13,7 +13,7 @@ const CodeExchange = () => {
         // Extract code from URL parameters
         const urlParams = new URLSearchParams(window.location.search);
         const codeParam = urlParams.get('code');
-        
+        console.log("logging")
         if (!codeParam) {
           setStatus('error');
           setMessage('No authentication code found in URL');
