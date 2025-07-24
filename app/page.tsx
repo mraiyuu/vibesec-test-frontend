@@ -44,36 +44,36 @@ const CodeExchange: React.FC = () => {
         }
 
         console.log("Sending request to backend with code:", codeData);
+
         const response = await axios.post(
-          // "https://backend.vibesec.app/api/v2/user/exchangeCode",
           "https://backend.vibesec.app/api/v2/admin/getAllUserPayments",
           { code: codeData },
           {
             headers: { "Content-Type": "application/json" },
             withCredentials: true,
+            signal: controller.signal,
+            validateStatus: () => true, // Prevent Axios from throwing on 401
           }
         );
 
-        // Log the entire backend response
-        console.log("Backend response:", response.data);
+        console.log("Backend response:", response); // Full response object
+        console.log("Backend response data:", response.data); // Data payload
 
         if (response.status >= 200 && response.status < 300) {
           setAuthState("success");
           setRedirecting(true);
-          
+
           setTimeout(() => {
             window.location.href = "/dashboard";
           }, 1000);
         } else {
-          setAuthError(response.data.error || "Authentication failed");
+          setAuthError(response.data?.error || "Authentication failed");
           setAuthState("error");
         }
       } catch (error: any) {
         if (error?.name === "AbortError") return;
-        console.error("Authentication error:", error);
-        // Log the error response if available
-        console.log("Backend error response:", error.response);
-        setAuthError(error.response?.data?.error || "Authentication failed. Please try again.");
+        console.error("Unexpected error during authentication:", error);
+        setAuthError("Authentication failed. Please try again.");
         setAuthState("error");
       }
     };
