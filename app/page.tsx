@@ -46,6 +46,7 @@ const CodeExchange: React.FC = () => {
           return;
         }
 
+        console.log("Sending request to backend with code:", codeData);
         const response = await fetch(
           "https://backend.vibesec.app/api/v2/user/exchangeCode",
           {
@@ -57,8 +58,14 @@ const CodeExchange: React.FC = () => {
           }
         );
 
+        const responseData = await response.json().catch(() => ({}));
+        console.log("Backend response:", {
+          status: response.status,
+          data: responseData,
+          headers: Object.fromEntries(response.headers.entries())
+        });
+
         if (response.ok) {
-          await response.json();
           setAuthState("success");
           setRedirecting(true);
           
@@ -67,8 +74,7 @@ const CodeExchange: React.FC = () => {
             window.location.href = "/dashboard";
           }, 1000);
         } else {
-          const errorData = await response.json().catch(() => ({}));
-          setAuthError(errorData.error || "Authentication failed");
+          setAuthError(responseData.error || "Authentication failed");
           setAuthState("error");
         }
       } catch (error: any) {
@@ -82,7 +88,7 @@ const CodeExchange: React.FC = () => {
     authenticateUser();
 
     return () => controller.abort();
-  }, [authState]); // Added authState to dependencies
+  }, [authState]);
 
   if (authState === "loading") {
     return (
