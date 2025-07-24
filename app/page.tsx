@@ -30,7 +30,7 @@ const CodeExchange = () => {
         console.log('Exchanging code:', actualCode);
 
         // Call your backend API to exchange code for session tokens
-        const response = await fetch('https://backend.vibesec.app/api/v2/user/callback', {  
+        const response = await fetch('https://backend.vibesec.app/api/v2/user/exchangeCode', {  
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
