@@ -64,7 +64,7 @@ const CodeExchange: React.FC = () => {
           
           // Redirect after a short delay to show success message
           setTimeout(() => {
-            window.location.href = "/";
+            window.location.href = "/dashboard";
           }, 1000);
         } else {
           const errorData = await response.json().catch(() => ({}));
