@@ -59,9 +59,9 @@ const CodeExchange = () => {
           // Update state to success - this will trigger UI render
           setAuthState('success');
 
-          // Redirect to dashboard after brief delay
+          // Redirect to home
           setTimeout(() => {
-            window.location.href = '/dashboard';
+            window.location.href = '/';
           }, 1000);
 
         } else {
