@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { AlertCircle, CheckCircle, Loader } from "lucide-react";
+import axios from "axios";
 
 type AuthState = "loading" | "success" | "error";
 
@@ -10,7 +11,6 @@ const CodeExchange: React.FC = () => {
   const [authError, setAuthError] = useState<string | null>(null);
   const [redirecting, setRedirecting] = useState(false);
 
-  // Guarantees only one API call in both dev & prod (even with React StrictMode)
   const hasCalled = useRef(false);
 
   useEffect(() => {
@@ -25,15 +25,12 @@ const CodeExchange: React.FC = () => {
         const codeParam = url.searchParams.get("code");
 
         if (!codeParam) {
-          // If we're already in success state, don't show error (we're probably in redirect)
           if (authState === "success") return;
-          
           setAuthError("No authentication code found in URL");
           setAuthState("error");
           return;
         }
 
-        // Remove the code from the URL immediately to avoid re-triggers on remount
         url.searchParams.delete("code");
         window.history.replaceState({}, document.title, url.toString());
 
@@ -47,40 +44,36 @@ const CodeExchange: React.FC = () => {
         }
 
         console.log("Sending request to backend with code:", codeData);
-        const response = await fetch(
+        const response = await axios.post(
           "https://backend.vibesec.app/api/v2/user/exchangeCode",
+          { code: codeData },
           {
-            method: "POST",
             headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({ code: codeData }),
+            withCredentials: true,
             signal: controller.signal,
           }
         );
 
-        const responseData = await response.json().catch(() => ({}));
-        console.log("Backend response:", {
-          status: response.status,
-          data: responseData,
-          headers: Object.fromEntries(response.headers.entries())
-        });
+        // Log the entire backend response
+        console.log("Backend response:", response);
 
-        if (response.ok) {
+        if (response.status >= 200 && response.status < 300) {
           setAuthState("success");
           setRedirecting(true);
           
-          // Redirect after a short delay to show success message
           setTimeout(() => {
             window.location.href = "/dashboard";
           }, 1000);
         } else {
-          setAuthError(responseData.error || "Authentication failed");
+          setAuthError(response.data.error || "Authentication failed");
           setAuthState("error");
         }
       } catch (error: any) {
         if (error?.name === "AbortError") return;
         console.error("Authentication error:", error);
-        setAuthError("Authentication failed. Please try again.");
+        // Log the error response if available
+        console.log("Backend error response:", error.response);
+        setAuthError(error.response?.data?.error || "Authentication failed. Please try again.");
         setAuthState("error");
       }
     };
