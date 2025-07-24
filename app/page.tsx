@@ -28,6 +28,7 @@ const CodeExchange = () => {
         const actualCode = JSON.parse(atob(codeData.data)).code;
         
         console.log('Exchanging code:', actualCode);
+        console.log("calling backend")
 
         // Call your backend API to exchange code for session tokens
         const response = await fetch('https://backend.vibesec.app/api/v2/user/exchangeCode', {  
@@ -40,6 +41,7 @@ const CodeExchange = () => {
             code: actualCode
           })
         });
+        console.log(response)
 
         if (response.ok) {
           const data = await response.json();
