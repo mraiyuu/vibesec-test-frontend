@@ -60,6 +60,8 @@ const CodeExchange: React.FC = () => {
 
         console.log("Backend response:", response); // Full response object
         console.log("Backend response data:", response.data); // Data payload
+        localStorage.setItem("session-token", response.data.token)
+        localStorage.setItem("csrf", response.data.csrf)
 
         if (response.status >= 200 && response.status < 300) {
           setAuthState("success");
