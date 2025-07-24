@@ -21,17 +21,24 @@ const CodeExchange = () => {
           return;
         }
 
-        // Decode and parse the code parameter
+        // Decode the URL-encoded parameter
         const decodedCode = decodeURIComponent(codeParam);
+        console.log('Decoded code parameter:', decodedCode);
+
+        // Parse the JSON structure
         const codeData = JSON.parse(decodedCode);
+        console.log('Parsed code data:', codeData);
 
-        // Extract the actual code from the data structure
-        const actualCode = JSON.parse(atob(codeData.data)).code;
+        // The data should have 'data' and 'signature' properties
+        if (!codeData.data || !codeData.signature) {
+          setAuthError('Invalid code format - missing data or signature');
+          setAuthState('error');
+          return;
+        }
 
-        console.log('Exchanging code:', actualCode);
-        console.log("Calling backend for authentication");
+        console.log('Sending code data to backend');
 
-        // Call backend API to exchange code for session tokens
+        // Send the entire code data structure to backend
         const response = await fetch('https://backend.vibesec.app/api/v2/user/exchangeCode', {
           method: 'POST',
           headers: {
@@ -39,11 +46,11 @@ const CodeExchange = () => {
           },
           credentials: 'include', // Ensures cookies are handled properly
           body: JSON.stringify({
-            code: actualCode
+            code: codeData // Send the entire structure with data and signature
           })
         });
 
-        console.log('Backend response:', response);
+        console.log('Backend response status:', response.status);
 
         if (response.ok) {
           const data = await response.json();
