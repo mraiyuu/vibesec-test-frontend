@@ -1,24 +1,27 @@
 "use client";
+
 import React, { useEffect, useRef, useState } from "react";
 import { AlertCircle, CheckCircle, Loader } from "lucide-react";
 
-const CodeExchange = () => {
-  const [authState, setAuthState] = useState<"loading" | "success" | "error">("loading");
+type AuthState = "loading" | "success" | "error";
+
+const CodeExchange: React.FC = () => {
+  const [authState, setAuthState] = useState<AuthState>("loading");
   const [authError, setAuthError] = useState<string | null>(null);
 
-  // Prevent running twice (React 18 StrictMode)
-  const hasRun = useRef(false);
+  // Guarantees only one API call in both dev & prod (even with React StrictMode)
+  const hasCalled = useRef(false);
 
   useEffect(() => {
-    if (hasRun.current) return;
-    hasRun.current = true;
+    if (hasCalled.current) return;
+    hasCalled.current = true;
+
+    const controller = new AbortController();
 
     const authenticateUser = async () => {
       try {
         const url = new URL(window.location.href);
         const codeParam = url.searchParams.get("code");
-
-        console.log("Starting authentication process");
 
         if (!codeParam) {
           setAuthError("No authentication code found in URL");
@@ -26,23 +29,18 @@ const CodeExchange = () => {
           return;
         }
 
-        // Strip the code from the URL right away so a remount won't retry
+        // Remove the code from the URL immediately to avoid re-triggers on remount
         url.searchParams.delete("code");
         window.history.replaceState({}, document.title, url.toString());
 
         const decodedCode = decodeURIComponent(codeParam);
-        console.log("Decoded code parameter:", decodedCode);
-
         const codeData = JSON.parse(decodedCode);
-        console.log("Parsed code data:", codeData);
 
         if (!codeData.data || !codeData.signature) {
           setAuthError("Invalid code format - missing data or signature");
           setAuthState("error");
           return;
         }
-
-        console.log("Sending code data to backend");
 
         const response = await fetch(
           "https://backend.vibesec.app/api/v2/user/exchangeCode",
@@ -51,28 +49,26 @@ const CodeExchange = () => {
             headers: { "Content-Type": "application/json" },
             credentials: "include",
             body: JSON.stringify({ code: codeData }),
+            signal: controller.signal,
           }
         );
 
-        console.log("Backend response status:", response.status);
-
         if (response.ok) {
-          const data = await response.json();
-          console.log("Authentication successful", data);
-
+          // you can read token/csrf if you need them:
+          // const { token, csrf } = await response.json();
+          await response.json();
           setAuthState("success");
 
           setTimeout(() => {
-          // If you prefer Next/router, use router.replace("/")
             window.location.href = "/";
           }, 1000);
         } else {
-          const errorData = await response.json();
-          console.error("Authentication failed:", errorData);
+          const errorData = await response.json().catch(() => ({}));
           setAuthError(errorData.error || "Authentication failed");
           setAuthState("error");
         }
-      } catch (error) {
+      } catch (error: any) {
+        if (error?.name === "AbortError") return;
         console.error("Authentication error:", error);
         setAuthError("Authentication failed. Please try again.");
         setAuthState("error");
@@ -80,6 +76,8 @@ const CodeExchange = () => {
     };
 
     authenticateUser();
+
+    return () => controller.abort();
   }, []);
 
   if (authState === "loading") {
@@ -106,6 +104,7 @@ const CodeExchange = () => {
           </h1>
           <p className="text-red-600 mb-6">{authError}</p>
           <button
+          // You could also push back to /login or wherever
             onClick={() => window.location.reload()}
             className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
           >
