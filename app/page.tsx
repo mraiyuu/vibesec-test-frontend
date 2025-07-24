@@ -8,6 +8,7 @@ type AuthState = "loading" | "success" | "error";
 const CodeExchange: React.FC = () => {
   const [authState, setAuthState] = useState<AuthState>("loading");
   const [authError, setAuthError] = useState<string | null>(null);
+  const [redirecting, setRedirecting] = useState(false);
 
   // Guarantees only one API call in both dev & prod (even with React StrictMode)
   const hasCalled = useRef(false);
@@ -24,6 +25,9 @@ const CodeExchange: React.FC = () => {
         const codeParam = url.searchParams.get("code");
 
         if (!codeParam) {
+          // If we're already in success state, don't show error (we're probably in redirect)
+          if (authState === "success") return;
+          
           setAuthError("No authentication code found in URL");
           setAuthState("error");
           return;
@@ -54,11 +58,11 @@ const CodeExchange: React.FC = () => {
         );
 
         if (response.ok) {
-          // you can read token/csrf if you need them:
-          // const { token, csrf } = await response.json();
           await response.json();
           setAuthState("success");
-
+          setRedirecting(true);
+          
+          // Redirect after a short delay to show success message
           setTimeout(() => {
             window.location.href = "/";
           }, 1000);
@@ -78,7 +82,7 @@ const CodeExchange: React.FC = () => {
     authenticateUser();
 
     return () => controller.abort();
-  }, []);
+  }, [authState]); // Added authState to dependencies
 
   if (authState === "loading") {
     return (
@@ -104,7 +108,6 @@ const CodeExchange: React.FC = () => {
           </h1>
           <p className="text-red-600 mb-6">{authError}</p>
           <button
-          // You could also push back to /login or wherever
             onClick={() => window.location.reload()}
             className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
           >
@@ -123,11 +126,13 @@ const CodeExchange: React.FC = () => {
           Authentication Successful!
         </h1>
         <p className="text-green-600 mb-4">Session established and cookies set.</p>
-        <div className="flex justify-center">
-          <div className="animate-pulse text-sm text-gray-500">
-            Redirecting to dashboard...
+        {redirecting && (
+          <div className="flex justify-center">
+            <div className="animate-pulse text-sm text-gray-500">
+              Redirecting to dashboard...
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
