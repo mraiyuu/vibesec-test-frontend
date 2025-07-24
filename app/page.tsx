@@ -1,12 +1,12 @@
 "use client";
-import React, { useEffect, useState } from 'react';
+import React, { useLayoutEffect, useState } from 'react';
 import { AlertCircle, CheckCircle, Loader } from 'lucide-react';
 
 const CodeExchange = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authState, setAuthState] = useState<'loading' | 'success' | 'error'>('loading');
   const [authError, setAuthError] = useState<string | null>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const authenticateUser = async () => {
       try {
         // Extract code from URL parameters
@@ -17,6 +17,7 @@ const CodeExchange = () => {
 
         if (!codeParam) {
           setAuthError('No authentication code found in URL');
+          setAuthState('error');
           return;
         }
 
@@ -48,8 +49,8 @@ const CodeExchange = () => {
           const data = await response.json();
           console.log('Authentication successful, cookies should be set');
 
-          // Set authenticated state - this will trigger UI render
-          setIsAuthenticated(true);
+          // Update state to success - this will trigger UI render
+          setAuthState('success');
 
           // Redirect to dashboard after brief delay
           setTimeout(() => {
@@ -60,20 +61,22 @@ const CodeExchange = () => {
           const errorData = await response.json();
           console.error('Authentication failed:', errorData);
           setAuthError(errorData.error || 'Authentication failed');
+          setAuthState('error');
         }
 
       } catch (error) {
         console.error('Authentication error:', error);
         setAuthError('Authentication failed. Please try again.');
+        setAuthState('error');
       }
     };
 
-    // Start authentication immediately when component mounts
+    // Start authentication immediately - runs synchronously before DOM updates
     authenticateUser();
-  }, []);
+  }, []); // Empty dependency array - runs once on mount
 
-  // Don't render any UI until we get a response from backend
-  if (!isAuthenticated && !authError) {
+  // Loading state - shows until backend responds
+  if (authState === 'loading') {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
@@ -85,8 +88,8 @@ const CodeExchange = () => {
     );
   }
 
-  // Show error state if authentication failed
-  if (authError) {
+  // Error state - only renders after backend error response
+  if (authState === 'error') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full text-center">
@@ -104,7 +107,7 @@ const CodeExchange = () => {
     );
   }
 
-  // Show success state - this only renders after successful authentication
+  // Success state - only renders after successful backend response and cookies are set
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
       <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full text-center">
