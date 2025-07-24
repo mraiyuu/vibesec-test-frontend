@@ -63,6 +63,11 @@ const CodeExchange: React.FC = () => {
         localStorage.setItem("session-token", response.data.token)
         localStorage.setItem("csrf", response.data.csrf)
 
+        // Set cookies (session-token and X-CSTF-Token)
+        document.cookie = `session-token=${response.data.token}; path=/; SameSite=Strict; Secure`;
+        document.cookie = `X-CSRF-Token=${response.data.csrf}; path=/; SameSite=Strict; Secure`;
+
+
         if (response.status >= 200 && response.status < 300) {
           setAuthState("success");
           setRedirecting(true);
