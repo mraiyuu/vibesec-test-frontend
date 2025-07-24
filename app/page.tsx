@@ -62,6 +62,7 @@ const CodeExchange: React.FC = () => {
         console.log("Backend response data:", response.data); // Data payload
         localStorage.setItem("session-token", response.data.token)
         localStorage.setItem("csrf", response.data.csrf)
+        localStorage.setItem("user_id", response.data.user_id)
 
         // Set cookies (session-token and X-CSTF-Token)
         document.cookie = `session-token=${response.data.token}; path=/; SameSite=Strict; Secure`;
